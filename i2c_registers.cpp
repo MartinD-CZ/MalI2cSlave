@@ -1,4 +1,4 @@
-#include "i2c_slave.h"
+#include "i2c_registers.h"
 
 #include "mal_salloc.h"
 #include "mal_assert.h"
@@ -73,7 +73,10 @@ void I2cSlaveRegisters::rxCallback()
 {
 	m_state = State::RX;
 	if (m_lastRxPos < sizeof(m_lastRx))
-		m_lastRx[m_lastRxPos++] = m_i2cSlave.read();
+	{
+		m_lastRx[m_lastRxPos] = m_i2cSlave.read();
+		m_lastRxPos = m_lastRxPos + 1;
+	}	
 }
 
 
