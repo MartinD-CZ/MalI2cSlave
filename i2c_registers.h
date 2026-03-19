@@ -46,6 +46,7 @@ private:
 	void addrMatchCallback();
 	void rxCallback();
 	void stopCallback();
+	void txisCallback();
 
 	RegEntry* getRegisterPtr(uint8_t address) const;
 
@@ -57,5 +58,5 @@ private:
 
 	volatile State m_state = State::IDLE;
 	volatile uint8_t m_lastRx[5];
-	volatile size_t m_lastRxPos;
+	volatile size_t m_lastRxTxPos;
 };
