@@ -19,16 +19,6 @@ void I2cSlaveRegisters::init(uint8_t myAddress, size_t numRegisters, uint_fast8_
 }
 
 
-void I2cSlaveRegisters::process()
-{
-	/*if (m_state == State::STOP)
-	{
-		m_state = State::IDLE;
-		LOGI("[I2C REG] RX finished, data: %02X %02X %02X %02X %02X", m_lastRx[0], m_lastRx[1], m_lastRx[2], m_lastRx[3], m_lastRx[4]);
-	}*/
-}
-
-
 void I2cSlaveRegisters::addRegister(uint8_t address, size_t sizeBytes)
 {
 	ASSERT(m_numRegisters < m_maxRegisters);
@@ -64,13 +54,11 @@ size_t I2cSlaveRegisters::getRegister(uint8_t address, void* data, size_t maxByt
 void I2cSlaveRegisters::addrMatchCallback()
 {
 	m_lastRxTxPos = 0;
-	m_state = State::ADDR_MATCHED;
 }
 
 
 void I2cSlaveRegisters::rxCallback()
 {
-	m_state = State::RX;
 	if (m_lastRxTxPos < sizeof(m_lastRx))
 	{
 		m_lastRx[m_lastRxTxPos] = m_i2cSlave.read();
@@ -81,7 +69,6 @@ void I2cSlaveRegisters::rxCallback()
 
 void I2cSlaveRegisters::stopCallback()
 {
-	m_state = State::STOP;
 	if (!m_i2cSlave.isReadRequest() && m_lastRxTxPos > 1)		//if this is a write request and at least 2 bytes were received (register address + at least 1 byte of data)
 	{
 		const auto reg = getRegisterPtr(m_lastRx[0]);
