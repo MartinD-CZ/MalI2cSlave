@@ -3,6 +3,8 @@
 
 #include "mal_i2c.h"
 
+#include "etl/utility.h"
+
 #include <cstdint>
 #include <cstddef>
 
@@ -16,6 +18,7 @@ public:
 
 	size_t getNumRegisters() const;
 	bool setRegisters(uint8_t startAddress, const void* data, size_t numBytes);
+	bool getRegisters(uint8_t startAddress, void* data, size_t numBytes) const;
 
 	template <typename T>
 	bool setRegister(uint8_t address, T value)
@@ -23,7 +26,13 @@ public:
 		return setRegisters(address, &value, sizeof(value));
 	}
 
-	uint8_t getRegister(uint8_t address) const;
+	template <typename T>
+	etl::pair<T, bool> getRegister(uint8_t address) const
+	{
+		T value = 0;
+		const auto rv = getRegisters(address, &value, sizeof(T));
+		return {value, rv};
+	}
 
 	void logRegisters() const;
 
@@ -31,9 +40,6 @@ private:
 	void addrMatchCallback();
 	void rxCallback();
 	void txisCallback();
-	void stopCallback() {
-		//m_lastRxTxPos = 0;
-	};
 
 	I2cSlave& m_i2cSlave;
 	

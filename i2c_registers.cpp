@@ -12,7 +12,6 @@ void I2cSlaveRegisters::init(uint8_t myAddress, uint8_t numRegisters, uint_fast8
 	m_i2cSlave.init(myAddress, Callback{&ClassCallbackHelper<I2cSlaveRegisters, &I2cSlaveRegisters::addrMatchCallback>, this}, irqPriority);
 	m_i2cSlave.setCallback(I2c::CallbackType::RX, Callback{&ClassCallbackHelper<I2cSlaveRegisters, &I2cSlaveRegisters::rxCallback>, this});
 	m_i2cSlave.setCallback(I2c::CallbackType::TXIS, Callback{&ClassCallbackHelper<I2cSlaveRegisters, &I2cSlaveRegisters::txisCallback>, this});
-	m_i2cSlave.setCallback(I2c::CallbackType::STOP, Callback{&ClassCallbackHelper<I2cSlaveRegisters, &I2cSlaveRegisters::stopCallback>, this});
 
 	m_registers = (uint8_t*)mal::salloc(numRegisters);
 	memset(m_registers, 0x00, numRegisters);
@@ -33,25 +32,30 @@ bool I2cSlaveRegisters::setRegisters(uint8_t startAddress, const void* data, siz
 	if ((startAddress + numBytes) > m_numRegisters)
 		return false;
 
+	const auto pm = enterCritical();
 	memcpy(&m_registers[startAddress], data, numBytes);
+	exitCritical(pm);
 	return true;
 }
 
 
-uint8_t I2cSlaveRegisters::getRegister(uint8_t address) const
+bool I2cSlaveRegisters::getRegisters(uint8_t startAddress, void* data, size_t numBytes) const
 {
-	if (address >= m_numRegisters)
-		return 0;
+	if ((startAddress + numBytes) > m_numRegisters)
+		return false;
 
-	return m_registers[address];
+	const auto pm = enterCritical();
+	memcpy(data, &m_registers[startAddress], numBytes);
+	exitCritical(pm);
+	return true;
 }
 
 
 void I2cSlaveRegisters::logRegisters() const
 {
-	LOGI("[I2C REGS] Reg\tVal\n");
+	LOGI("[I2C REGS] Register contents\n\tReg\tVal\n");
 	for (uint8_t i = 0; i < m_numRegisters; i++)
-		LOGI_NOINTRO("\t\t\t\t\t%02X\t%02X\n", i, m_registers[i]);
+		LOGI_NOINTRO("\t%02X\t%02X\n", i, m_registers[i]);
 }
 
 
